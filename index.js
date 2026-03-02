@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const inquirer = require('inquirer');
@@ -18,6 +18,54 @@ const BANNER = `
 
 const OUTPUT_DIR = 'Descarga';
 
+function getYtDlpPath() {
+  const isWindows = process.platform === 'win32';
+  const isMac = process.platform === 'darwin';
+  const isLinux = process.platform === 'linux';
+  
+  let commands = [];
+  
+  if (isWindows) {
+    commands = [
+      'yt-dlp',
+      'yt-dlp.exe',
+      'python -m yt_dlp',
+      'python3 -m yt_dlp',
+      'py -m yt_dlp',
+      'C:\\Python312\\python.exe -m yt_dlp',
+      'C:\\Python311\\python.exe -m yt_dlp',
+    ];
+  } else if (isMac) {
+    commands = [
+      'yt-dlp',
+      '/opt/homebrew/bin/yt-dlp',
+      '/usr/local/bin/yt-dlp',
+      'python3 -m yt_dlp',
+      'python -m yt_dlp',
+    ];
+  } else if (isLinux) {
+    commands = [
+      'yt-dlp',
+      'python3 -m yt_dlp',
+      'python -m yt_dlp',
+      '/usr/bin/yt-dlp',
+      '/usr/local/bin/yt-dlp',
+    ];
+  }
+  
+  for (const cmd of commands) {
+    try {
+      execSync(`${cmd} --version`, { stdio: 'ignore' });
+      return cmd;
+    } catch (e) {
+      continue;
+    }
+  }
+  return 'yt-dlp';
+}
+
+const YT_DLP = getYtDlpPath();
+
 function clearScreen() {
   console.clear();
 }
@@ -34,7 +82,7 @@ function isPlaylist(url) {
 async function getPlaylistVideos(url) {
   return new Promise((resolve) => {
     const args = ['--flat-playlist', '--print', '%(title)s|%(duration)s|%(id)s', url];
-    const process = spawn('yt-dlp', args);
+    const process = spawn(YT_DLP, args);
 
     let output = '';
 
@@ -93,7 +141,7 @@ async function selectFromPlaylist(videos) {
 async function getVideoInfo(url) {
   return new Promise((resolve) => {
     const args = ['--dump-json', '--no-playlist', url];
-    const process = spawn('yt-dlp', args);
+    const process = spawn(YT_DLP, args);
 
     let output = '';
 
@@ -183,7 +231,7 @@ async function downloadVideo(url, formatType, isPlaylist = false) {
   args.push(url);
 
   return new Promise((resolve) => {
-    const process = spawn('yt-dlp', args, {
+    const process = spawn(YT_DLP, args, {
       stdio: 'inherit'
     });
 
