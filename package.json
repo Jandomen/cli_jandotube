@@ -1,0 +1,28 @@
+{
+  "name": "jandotube",
+  "version": "1.0.0",
+  "description": "🎬 Descarga videos, audio e información de YouTube desde la terminal",
+  "main": "index.js",
+  "bin": {
+    "jandotube": "./bin/jandotube"
+  },
+  "scripts": {
+    "setup": "node setup.js",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "youtube",
+    "download",
+    "cli",
+    "video",
+    "audio"
+  ],
+  "author": "Jandosoft",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "cli-spinners": "^2.9.0",
+    "inquirer": "^8.2.5",
+    "ytdl-core": "^4.11.5"
+  }
+}

@@ -8,138 +8,79 @@
 
 ## 🚀 Instalación Rápida
 
-### En macOS / Linux:
 ```bash
 git clone https://github.com/Jandomen/cli_jandotube.git
 cd cli_jandotube
-chmod +x install.sh && ./install.sh
+npm run setup
 ```
 
-### En Windows:
-```cmd
-git clone https://github.com/Jandomen/cli_jandotube.git
-cd cli_jandotube
-install.bat
-```
-
-O si prefieres (Git Bash / WSL):
-```bash
-curl -fsSL https://raw.githubusercontent.com/Jandomen/cli_jandotube/main/install.sh | bash
-```
+¡Listo! 🎉
 
 ---
 
 ## 📋 Requisitos
 
-- **Python 3.10+** (Python 3.12 recomendado)
-- **Node.js** (para extraer videos de YouTube)
-- **FFmpeg** (opcional, para convertir audio a MP3)
+- **Node.js 18+** (se detecta automáticamente)
+- **yt-dlp** (se instala automáticamente según tu SO)
 
-### Instalar requisitos en macOS:
+### Instalación manual de requisitos:
 
+**macOS:**
 ```bash
-brew install python3.12 node ffmpeg
+brew install node
 ```
 
-### Instalar requisitos en Linux (Ubuntu/Debian):
-
+**Windows:**
 ```bash
-sudo apt install python3.12 python3-pip nodejs ffmpeg
+choco install nodejs
 ```
 
-### Instalar requisitos en Windows:
-
-1. Descarga Python desde: https://www.python.org/downloads/
-2. Descarga Node.js desde: https://nodejs.org/
-3. Descarga FFmpeg desde: https://ffmpeg.org/download.html
-
-**Importante:** Al instalar Python, marca "Add Python to PATH"
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt install nodejs npm
+```
 
 ---
 
 ## 🎯 Uso
 
-### Menú interactivo:
 ```bash
-jandotube
+jandotube              # Menú interactivo
+jandotube <url>        # Descargar video
+jandotube <url> -a    # Descargar audio (MP3)
+jandotube <url> -i    # Ver información del video
+jandotube --update    # Actualizar yt-dlp
+jandotube --version   # Ver versión
 ```
 
-### Descargar video directamente:
-```bash
-jandotube "URL_DEL_VIDEO" -v
+---
+
+## 📁 Estructura
+
+```
+jandotube/
+├── bin/
+│   └── jandotube       # Entry point
+├── index.js            # Código principal
+├── setup.js           # Instalador automático
+├── package.json       # Configuración npm
+└── README.md
 ```
 
-### Descargar audio (MP3):
+---
+
+## 🐛 Solución de Problemas
+
+### Error: "yt-dlp not found"
 ```bash
-jandotube "URL_DEL_VIDEO" -a
+npm run setup
 ```
 
-### Ver información del video:
-```bash
-jandotube "URL_DEL_VIDEO" -i
-```
-
-### Actualizar jandotube/yt-dlp:
+### Necesitas actualizar yt-dlp:
 ```bash
 jandotube --update
 ```
 
-### Ver ayuda:
-```bash
-jandotube --help
-```
-
 ---
-
-## 📖 Ejemplos
-
-```bash
-# Menú interactivo (te pregunta qué hacer)
-jandotube
-
-# Descargar video
-jandotube "https://www.youtube.com/watch?v=dQw4w9WgXcQ" -v
-
-# Descargar audio
-jandotube "https://www.youtube.com/watch?v=dQw4w9WgXcQ" -a
-
-# Ver información
-jandotube "https://www.youtube.com/watch?v=dQw4w9WgXcQ" -i
-
-# Descargar playlist (selecciona qué video)
-jandotube "https://www.youtube.com/playlist?list=PL..."
-```
-
----
-
-## 🔧 Solución de Problemas
-
-### Error 403 - YouTube bloqueó la descarga
-- Ejecuta: `jandotube --update`
-- Espera unos minutos e intenta de nuevo
-- Usa una VPN si el problema persiste
-
-### Error "No supported JavaScript runtime"
-- Instala Node.js: `brew install node` (macOS) o `apt install nodejs` (Linux)
-
-### Error de formato de video
-- Asegúrate de tener Python 3.10+ instalado
-- Actualiza: `jandotube --update`
-
----
-
-## 📂 Estructura
-
-```
-jandotube/
-├── jandotube          # Script principal
-├── install.sh         # Script de instalación
-├── README.md          # Este archivo
-└── Descarga/          # Carpeta de descargas
-```
-
----
-
-## 📄 Licencia
 
 © 2026 **Jandosoft** • *Digital Innovation Hub*
