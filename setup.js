@@ -1,24 +1,14 @@
 #!/usr/bin/env node
 
 const { execSync } = require('child_process');
+const fs = require('fs');
 
 const BANNER = `
- ╔═══════════════════════════════════════════════════════════╗
- ║   ██████╗ ███████╗████████╗██████╗  ██████╗                ║
- ║   ██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗               ║
- ║   ██████╔╝█████╗     ██║   ██████╔╝██║   ██║               ║
- ║   ██╔══██╗██╔══╝     ██║   ██╔══██╗██║   ██║               ║
- ║   ██║  ██║███████╗   ██║   ██║  ██║╚██████╔╝               ║
- ║   ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝                ║
- ║                      ███████╗ ██████╗ ██████╗               ║
- ║                      ██╔════╝██╔═══██╗██╔══██╗              ║
- ║                      █████╗  ██║   ██║██████╔╝              ║
- ║                      ██╔══╝  ██║   ██║██╔══██╗              ║
- ║                      ███████╗╚██████╔╝██║  ██║              ║
- ║                      ╚══════╝ ╚═════╝ ╚═╝  ╚═╝              ║
- ╠═══════════════════════════════════════════════════════════╣
- ║  🎬 JANDOTUBE CLI - by Jandosoft                            ║
- ╚═══════════════════════════════════════════════════════════╝
+ JJJJJJJJ  AAAAAAAA  NNNNNNNN  DDDDDDDD  OOOOOO  TTTTTTTT  UUUUUUUU  BBBBBBBBB  EEEE
+    JJ     AA        NN        DD       OO       TT       UU        BB       EE
+   JJ      AAAA     NNNN     DDDD     OOOO     TTTT     UUUU      BBBB     EEEE
+J  JJ    AA  AA   NN  NN   DD  DD   OO  OO   TT  TT   UU  UU    BB  BB   EE  EE
+ JJJJ    AAAAAAAA  NNNNNN  DDDDDD  OOOOOO  TTTTT   UUUU    BBBB    EEEE
 `;
 
 function getOS() {
@@ -54,6 +44,16 @@ function runCommand(command, description) {
   }
 }
 
+function checkNpmDeps() {
+  try {
+    require('inquirer');
+    require('chalk');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function setup() {
   console.clear();
   console.log(BANNER);
@@ -72,11 +72,26 @@ async function setup() {
   }
   
   console.log('\n 📦 Instalando dependencias npm...');
+  
+  if (!checkNpmDeps()) {
+    console.log(' ⚠️  Dependencias faltantes, eliminando node_modules...');
+    try {
+      if (fs.existsSync('node_modules')) {
+        execSync('rmdir /s /q node_modules', { stdio: 'inherit', shell: true });
+      }
+    } catch (e) {
+      try {
+        execSync('rm -rf node_modules', { stdio: 'inherit' });
+      } catch (e2) {}
+    }
+  }
+  
   try {
     execSync('npm install', { stdio: 'inherit' });
     console.log(' ✅ Dependencias npm instaladas');
   } catch (e) {
     console.log(' ❌ Error al instalar dependencias npm');
+    console.log(' 💡 Intenta: npm install --force');
     process.exit(1);
   }
   
@@ -87,23 +102,41 @@ async function setup() {
     console.log(' ❌ yt-dlp no encontrado');
     console.log('\n 📥 Instalando yt-dlp...');
     
-    if (os === 'macos') {
+    if (os === 'windows') {
+      const installers = [
+        { cmd: 'pip install yt-dlp', desc: 'Instalando yt-dlp (pip)' },
+        { cmd: 'pip3 install yt-dlp', desc: 'Instalando yt-dlp (pip3)' },
+        { cmd: 'python -m pip install yt-dlp', desc: 'Instalando yt-dlp (python -m pip)' },
+        { cmd: 'choco install yt-dlp -y', desc: 'Instalando yt-dlp (Chocolatey)' },
+      ];
+      
+      let installed = false;
+      for (const inst of installers) {
+        if (runCommand(inst.cmd, inst.desc)) {
+          installed = true;
+          break;
+        }
+      }
+      
+      if (!installed) {
+        console.log(' ⚠️  No se pudo instalar yt-dlp automáticamente');
+        console.log('    Instala manualmente: pip install yt-dlp');
+      }
+    }
+    else if (os === 'macos') {
       if (checkCommand('brew --version')) {
         runCommand('brew install yt-dlp', 'Instalando yt-dlp (Homebrew)');
       } else {
-        console.log(' ⚠️  Homebrew no encontrado, intentando con pip...');
         runCommand('pip3 install yt-dlp', 'Instalando yt-dlp (pip3)');
         runCommand('pip install yt-dlp', 'Instalando yt-dlp (pip)');
       }
     } 
     else if (os === 'linux') {
       const installers = [
+        { cmd: 'pip3 install yt-dlp', desc: 'Instalando yt-dlp (pip3)' },
+        { cmd: 'pip install yt-dlp', desc: 'Instalando yt-dlp (pip)' },
         { cmd: 'sudo apt-get install -y yt-dlp', desc: 'Instalando yt-dlp (apt-get)' },
         { cmd: 'sudo apt install -y yt-dlp', desc: 'Instalando yt-dlp (apt)' },
-        { cmd: 'sudo dnf install -y yt-dlp', desc: 'Instalando yt-dlp (dnf)' },
-        { cmd: 'sudo yum install -y yt-dlp', desc: 'Instalando yt-dlp (yum)' },
-        { cmd: 'pip3 install yt-dlp', desc: 'Instalando yt-dlp (pip3)' },
-        { cmd: 'pip install yt-dlp', desc: 'Instalando yt-dlp (pip)' },
       ];
       
       let installed = false;
@@ -112,32 +145,6 @@ async function setup() {
           installed = true;
           break;
         }
-      }
-      
-      if (!installed) {
-        console.log(' ⚠️  No se pudo instalar yt-dlp automáticamente');
-        console.log('    Instala manualmente: https://github.com/yt-dlp/yt-dlp#installation');
-      }
-    } 
-    else if (os === 'windows') {
-      const installers = [
-        { cmd: 'choco install yt-dlp -y', desc: 'Instalando yt-dlp (Chocolatey)' },
-        { cmd: 'winget install yt-dlp', desc: 'Instalando yt-dlp (winget)' },
-        { cmd: 'pip install yt-dlp', desc: 'Instalando yt-dlp (pip)' },
-        { cmd: 'pip3 install yt-dlp', desc: 'Instalando yt-dlp (pip3)' },
-      ];
-      
-      let installed = false;
-      for (const inst of installers) {
-        if (runCommand(inst.cmd, inst.desc)) {
-          installed = true;
-          break;
-        }
-      }
-      
-      if (!installed) {
-        console.log(' ⚠️  No se pudo instalar yt-dlp automáticamente');
-        console.log('    Descarga desde: https://github.com/yt-dlp/yt-dlp/releases');
       }
     }
   }
@@ -147,18 +154,17 @@ async function setup() {
     execSync('npm link', { stdio: 'inherit' });
     console.log(' ✅ Comando "jandotube" configurado');
   } catch (e) {
-    console.log(' ⚠️  Necesitas permisos de admin. Ejecuta: sudo npm link');
+    console.log(' ⚠️  Necesitas permisos. Ejecuta: sudo npm link');
   }
   
   console.log('\n' + '='.repeat(60));
   console.log(' 🎉 ¡INSTALACIÓN COMPLETA!');
   console.log('='.repeat(60));
-  console.log('\n 📋 Comandos disponibles:');
+  console.log('\n 📋 Comandos:');
   console.log('   jandotube           # Menú interactivo');
   console.log('   jandotube <url>    # Descargar video');
   console.log('   jandotube -a       # Descargar audio');
   console.log('   jandotube -i       # Ver información');
-  console.log('   jandotube --update # Actualizar');
   console.log('');
 }
 

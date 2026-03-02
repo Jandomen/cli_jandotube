@@ -7,13 +7,11 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 
 const BANNER = `
- ╔═══════════════════════════════════════════════════════════╗
- ║                                                           ║
- ║                 🎬  JANDOTUBE                             ║
- ║                                                           ║
- ╠═══════════════════════════════════════════════════════════╣
- ║                       by Jandosoft                        ║
- ╚═══════════════════════════════════════════════════════════╝
+ JJJJJJJJ  AAAAAAAA  NNNNNNNN  DDDDDDDD  OOOOOO  TTTTTTTT  UUUUUUUU  BBBBBBBBB  EEEE
+    JJ     AA        NN        DD       OO       TT       UU        BB       EE
+   JJ      AAAA     NNNN     DDDD     OOOO     TTTT     UUUU      BBBB     EEEE
+J  JJ    AA  AA   NN  NN   DD  DD   OO  OO   TT  TT   UU  UU    BB  BB   EE  EE
+ JJJJ    AAAAAAAA  NNNNNN  DDDDDD  OOOOOO  TTTTT   UUUU    BBBB    EEEE
 `;
 
 const OUTPUT_DIR = 'Descarga';
