@@ -8,16 +8,21 @@
 
 ## 🚀 Instalación Rápida
 
-Ejecuta estos comandos en tu terminal:
-
+### En macOS / Linux:
 ```bash
 git clone https://github.com/Jandomen/cli_jandotube.git
 cd cli_jandotube
 chmod +x install.sh && ./install.sh
 ```
 
-O si prefieres, instala directamente:
+### En Windows:
+```cmd
+git clone https://github.com/Jandomen/cli_jandotube.git
+cd cli_jandotube
+install.bat
+```
 
+O si prefieres (Git Bash / WSL):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jandomen/cli_jandotube/main/install.sh | bash
 ```
@@ -41,6 +46,14 @@ brew install python3.12 node ffmpeg
 ```bash
 sudo apt install python3.12 python3-pip nodejs ffmpeg
 ```
+
+### Instalar requisitos en Windows:
+
+1. Descarga Python desde: https://www.python.org/downloads/
+2. Descarga Node.js desde: https://nodejs.org/
+3. Descarga FFmpeg desde: https://ffmpeg.org/download.html
+
+**Importante:** Al instalar Python, marca "Add Python to PATH"
 
 ---
 
