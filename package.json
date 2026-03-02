@@ -1,14 +1,14 @@
 {
   "name": "jandotube",
   "version": "1.0.0",
-  "description": "🎬 Descarga videos, audio e información de YouTube desde la terminal",
+  "description": "\ud83c\udfac Descarga videos, audio e informaci\u00f3n de YouTube desde la terminal",
   "main": "index.js",
   "bin": {
     "jandotube": "./bin/jandotube"
   },
   "scripts": {
     "setup": "node setup.js",
-    "start": "node index.js"
+    "start": "node api.js && node index.js"
   },
   "keywords": [
     "youtube",
