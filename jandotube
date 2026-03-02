@@ -1,0 +1,396 @@
+#!/usr/bin/env python3
+import argparse
+import sys
+import os
+import subprocess
+import yt_dlp
+
+CLEAR = '\033[2J\033[H'
+BANNER = """
+ ╔═══════════════════════════════════════════════════════════╗
+ ║                                                           ║
+ ║                 🎬  JANDOTUBE                             ║
+ ║                                                           ║
+ ╠═══════════════════════════════════════════════════════════╣
+ ║                       by Jandosoft                        ║
+ ╚═══════════════════════════════════════════════════════════╝
+"""
+
+def clear_screen():
+    print(CLEAR, end='')
+
+def show_banner():
+    clear_screen()
+    print(BANNER)
+
+def print_step(text):
+    print(f"\n ▶ {text}")
+
+def is_playlist(url):
+    return 'list=' in url
+
+def get_playlist_videos(url):
+    try:
+        result = subprocess.run(['which', 'node'], capture_output=True, text=True)
+        node_path = result.stdout.strip() if result.returncode == 0 else None
+    except:
+        node_path = None
+    
+    js_runtimes = None
+    if node_path:
+        js_runtimes = {'node': {'path': node_path}}
+    
+    ydl_opts = {
+        'quiet': True, 
+        'no_warnings': True, 
+        'http_headers': {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'},
+        'js_runtimes': js_runtimes,
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+        
+        if 'entries' in info:
+            videos = []
+            for i, entry in enumerate(info['entries']):
+                if entry:
+                    title = entry.get('title', 'Sin título')[:50]
+                    duration = entry.get('duration', 0)
+                    dur_str = f"{duration//60}:{duration%60:02d}" if duration else "LIVE"
+                    videos.append({
+                        'index': i + 1,
+                        'title': title,
+                        'duration': dur_str,
+                        'url': f"https://youtube.com/watch?v={entry.get('id', '')}"
+                    })
+            return info.get('title', 'Playlist'), videos
+        return None, []
+    except Exception as e:
+        print(f" ⚠️  Error al obtener playlist: {e}")
+        return None, []
+
+def select_from_playlist(playlist_title, videos):
+    show_banner()
+    print(f"\n 📋 PLAYLIST: {playlist_title}")
+    print(f" 📊 Total de videos: {len(videos)}")
+    print(" " + "─" * 60)
+    
+    for v in videos:
+        print(f"   [{v['index']:2d}] 🎬 {v['title']:<50} ⏱️ {v['duration']}")
+    
+    print(" " + "─" * 60)
+    print("   [A] 📥 Descargar TODOS los videos")
+    print("   [0] ❌ Cancelar")
+    print("")
+    
+    while True:
+        try:
+            sel = input(" Selecciona el número del video a descargar: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            return None
+        
+        if sel.lower() == 'a':
+            return 'all'
+        elif sel == '0':
+            return None
+        elif sel.isdigit():
+            idx = int(sel)
+            if 1 <= idx <= len(videos):
+                return videos[idx - 1]['url']
+        print(" ⚠️  Opción inválida. Intenta de nuevo.")
+
+def get_video_info(url):
+    try:
+        result = subprocess.run(['which', 'node'], capture_output=True, text=True)
+        node_path = result.stdout.strip() if result.returncode == 0 else None
+    except:
+        node_path = None
+    
+    js_runtimes = None
+    if node_path:
+        js_runtimes = {'node': {'path': node_path}}
+    
+    ydl_opts = {
+        'quiet': True, 
+        'no_warnings': True, 
+        'http_headers': {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'},
+        'js_runtimes': js_runtimes,
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+        show_banner()
+        print(f"\n 📺 INFORMACIÓN DEL VIDEO")
+        print(" " + "─" * 50)
+        print(f" 🎬 Título: {info.get('title', 'N/A')}")
+        dur = info.get('duration', 0)
+        print(f" ⏱️  Duración: {dur//60} min {dur%60} seg")
+        views = info.get('view_count', 0)
+        print(f" 👁️  Vistas: {views:,}" if views else " 👁️  Vistas: N/A")
+        print(f" 📺 Canal: {info.get('uploader', 'N/A')}")
+        print(f" 📅 Fecha: {info.get('upload_date', 'N/A')}")
+        desc = info.get('description', 'N/A')
+        if desc and len(desc) > 100:
+            desc = desc[:100] + "..."
+        print(f" 📝 Descripción: {desc}")
+        print(" " + "─" * 50)
+        return True
+    except yt_dlp.utils.DownloadError as e:
+        error_msg = str(e)
+        if "403" in error_msg:
+            print("\n 🚫 ERROR 403 - YouTube bloquéo el acceso")
+            print(" El video podría ser privado o tener restricciones.")
+        elif "404" in error_msg:
+            print("\n 🚫 ERROR 404 - Video no encontrado")
+        else:
+            print(f"\n ⚠️  Error al obtener información: {e}")
+        return False
+    except Exception as e:
+        print(f"\n ⚠️  Error al obtener información: {e}")
+        return False
+
+def download_video(url, format_type, is_playlist_download=False):
+    output_dir = 'Descarga'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    show_banner()
+    
+    noplaylist = not is_playlist_download
+    
+    try:
+        result = subprocess.run(['which', 'node'], capture_output=True, text=True)
+        node_path = result.stdout.strip() if result.returncode == 0 else None
+    except:
+        node_path = None
+    
+    js_runtimes = None
+    if node_path:
+        js_runtimes = {'node': {'path': node_path}}
+    
+    if format_type == 'video':
+        print(f"\n 📥 Descargando VIDEO...")
+        ydl_opts = {
+            'format': 'best[ext=mp4]/best',
+            'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+            'noplaylist': noplaylist,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'extractor_retries': 3,
+            'fragment_retries': 3,
+            'js_runtimes': js_runtimes,
+        }
+    elif format_type == 'audio':
+        print(f"\n 🎵 Descargando AUDIO (MP3)...")
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+            'noplaylist': noplaylist,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'extractor_retries': 3,
+            'js_runtimes': js_runtimes,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+        print(f"\n ✅ ¡Descarga completada! 📁 {os.path.abspath(output_dir)}")
+        return True
+    except yt_dlp.utils.DownloadError as e:
+        error_msg = str(e)
+        if "403" in error_msg:
+            print("\n 🚫 ERROR 403 - YouTube bloquéo la descarga")
+            print(" ═══════════════════════════════════════════════")
+            print(" CAUSA: YouTube ha bloqueado tu IP o necesita")
+            print("       cookies de sesión para descargar.")
+            print("")
+            print(" SOLUCIONES:")
+            print("   [1] Ejecuta: jandotube --update")
+            print("   [2] Usa cookies del navegador (avanzado)")
+            print("   [3] Espera unos minutos e intenta de nuevo")
+            print("   [4] Cambia tu red (usa VPN)")
+        elif "404" in error_msg:
+            print("\n 🚫 ERROR 404 - Video no encontrado")
+            print(" ═══════════════════════════════════════════════")
+            print(" CAUSA: El video fue eliminado o la URL es")
+            print("       incorrecta.")
+        elif "not available" in error_msg.lower() or "unavailable" in error_msg.lower():
+            print("\n 🚫 VIDEO NO DISPONIBLE")
+            print(" ═══════════════════════════════════════════════")
+            print(" CAUSA: El video fue eliminado, es privado,")
+            print("       tiene restricciones de edad o país.")
+            print("")
+            print(" SOLUCIONES:")
+            print("   [1] Verifica que la URL sea correcta")
+            print("   [2] El video podría ser privado (inicia sesión)")
+            print("   [3] Prueba con otro video")
+        elif "429" in error_msg:
+            print("\n 🚫 ERROR 429 - Demasiadas peticiones")
+            print(" ═══════════════════════════════════════════════")
+            print(" CAUSA: YouTube限流了你的IP (demasiadas descargas)")
+            print("")
+            print(" SOLUCIONES:")
+            print("   [1] Espera 1-2 horas antes de intentar de nuevo")
+            print("   [2] Usa una VPN para cambiar tu IP")
+        elif "unable to download" in error_msg.lower():
+            print("\n 🚫 ERROR DE DESCARGA")
+            print(" ═══════════════════════════════════════════════")
+            print(" CAUSA: Error al descargar el video.")
+            print("")
+            print(" SOLUCIONES:")
+            print("   [1] El video podría estar restringido (edad)")
+            print("   [2] Intenta con: jandotube --update")
+            print("   [3] Prueba con otro video")
+        else:
+            print(f"\n ❌ Error en la descarga: {e}")
+        return False
+    except yt_dlp.utils.ExtractorError as e:
+        print(f"\n ⚠️  ERROR DEL EXTRACTOR: {e}")
+        print(" El video podría ser privado o estar eliminado.")
+        return False
+    except Exception as e:
+        print(f"\n ❌ Error inesperado: {type(e).__name__}: {e}")
+        return False
+
+def check_for_updates():
+    show_banner()
+    print("\n 🔄 Buscando actualizaciones...")
+    try:
+        result = subprocess.run(
+            [sys.executable, '-m', 'pip', 'install', '--upgrade', 'yt-dlp'],
+            capture_output=True, text=True
+        )
+        if 'Requirement already satisfied' in result.stdout:
+            print(" ✅ yt-dlp ya está actualizado.")
+        else:
+            print(" ✅ yt-dlp actualizado exitosamente.")
+    except Exception as e:
+        print(f" ❌ Error al actualizar: {e}")
+    
+    print("\n Presiona ENTER para continuar...", end='')
+    input()
+
+def main_menu():
+    while True:
+        show_banner()
+        
+        try:
+            url = input("\n 📥 Ingresa la URL del video de YouTube: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n\n 👋 Saliendo...")
+            break
+            
+        if not url:
+            continue
+        
+        is_playlist_dl = False
+        
+        if is_playlist(url):
+            playlist_title, videos = get_playlist_videos(url)
+            if not videos:
+                print("\n ⚠️  No se pudieron obtener los videos de la playlist.")
+                input("\n Presiona ENTER para continuar...")
+                continue
+            
+            selected = select_from_playlist(playlist_title, videos)
+            
+            if selected is None:
+                continue
+            elif selected == 'all':
+                url_to_download = url
+                is_playlist_dl = True
+            else:
+                url_to_download = selected
+                is_playlist_dl = False
+        else:
+            url_to_download = url
+            is_playlist_dl = False
+        
+        show_banner()
+        
+        print("\n 🎯 ¿Qué deseas hacer?")
+        print("   [1] 🎬 Descargar VIDEO")
+        print("   [2] 🎵 Descargar AUDIO (MP3)")
+        print("   [3] ℹ️  Ver INFORMACIÓN del video")
+        
+        try:
+            opcion = input("\n Selecciona (1/2/3): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n\n 👋 Saliendo...")
+            break
+        
+        if opcion == '1':
+            download_video(url_to_download, 'video', is_playlist_dl)
+            print("\n Presiona ENTER para continuar...", end='')
+            input()
+        elif opcion == '2':
+            download_video(url_to_download, 'audio', is_playlist_dl)
+            print("\n Presiona ENTER para continuar...", end='')
+            input()
+        elif opcion == '3':
+            get_video_info(url_to_download)
+            print("\n Presiona ENTER para continuar...", end='')
+            input()
+        else:
+            print("\n ⚠️  Opción inválida. Presiona ENTER para continuar...", end='')
+            input()
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog='jandotube',
+        description='🎬 Descarga videos, audio o información de YouTube'
+    )
+    parser.add_argument('url', nargs='?', help='URL del video de YouTube')
+    parser.add_argument('-v', '--video', action='store_true', help='Descargar video')
+    parser.add_argument('-a', '--audio', action='store_true', help='Descargar audio (MP3)')
+    parser.add_argument('-i', '--info', action='store_true', help='Mostrar información del video')
+    parser.add_argument('-u', '--update', action='store_true', help='Actualizar jandotube/yt-dlp')
+    parser.add_argument('--version', action='store_true', help='Mostrar versión')
+    
+    args = parser.parse_args()
+    
+    if args.version:
+        show_banner()
+        print(f"\n 📦 Versión de jandotube: 1.0.0")
+        try:
+            import yt_dlp
+            print(f" 📦 Versión de yt-dlp: {yt_dlp.version.__version__}")
+        except:
+            pass
+        print(f" 📦 Python: {sys.version.split()[0]}")
+        print("")
+        return
+    
+    if args.update:
+        check_for_updates()
+        return
+    
+    if not args.url:
+        main_menu()
+        return
+    
+    if args.video:
+        download_video(args.url, 'video')
+    elif args.audio:
+        download_video(args.url, 'audio')
+    elif args.info:
+        get_video_info(args.url)
+    else:
+        print("Especifica -v (video), -a (audio) o -i (info)")
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\n 👋 Saliendo de Jandotube... ¡Hasta luego!")
+    except EOFError:
+        pass
+    except Exception as e:
+        print(f"\n ❌ Error inesperado: {e}")
+        try:
+            input("\n Presiona ENTER para salir...")
+        except:
+            pass
